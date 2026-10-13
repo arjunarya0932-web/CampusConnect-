@@ -7,7 +7,7 @@ const postRoutes = require("./routes/posts");
 const commentRoutes = require("./routes/comments");
 const notificationRoutes = require("./routes/notifications");
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
@@ -24,7 +24,7 @@ mongoose
   .then(() => {
     console.log("MongoDB connected successfully ✅");
 
-    app.listen(PORT, "127.0.0.1", () => {
+   app.listen(PORT, "0.0.0.0", () => {
       console.log(
         `CampusConnect server running at http://127.0.0.1:${PORT}`
       );
