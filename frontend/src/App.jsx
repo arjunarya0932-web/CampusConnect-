@@ -52,7 +52,7 @@ useEffect(() => {
   const fetchNotifications = async () => {
     try {
       const response = await fetch(
-        `http://127.0.0.1:5000/api/notifications/${encodeURIComponent(
+        `https://campusconnect-3-6i2z.onrender.com/api/notifications/${encodeURIComponent(
           currentUser.name
         )}`
       );
@@ -122,7 +122,7 @@ const [bio, setBio] = useState(
 
   try {
     const response = await fetch(
-      `http://127.0.0.1:5000/api/posts/${postId}/like`,
+     `https://campusconnect-3-6i2z.onrender.com/api/posts/${postId}/like`,
       {
         method: "POST",
         headers: {
@@ -159,7 +159,7 @@ const deletePost = async (postId) => {
 
   try {
     const response = await fetch(
-      `http://127.0.0.1:5000/api/posts/${postId}`,
+      `https://campusconnect-3-6i2z.onrender.com/api/posts/${postId}`,
       {
         method: "DELETE",
         headers: {
@@ -193,18 +193,18 @@ const toggleSave = async (postId) => {
   }
 
   try {
-    const response = await fetch(
-      `http://127.0.0.1:5000/api/posts/${postId}/save`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          user: currentUser.name,
-        }),
-      }
-    );
+ const response = await fetch(
+  `https://campusconnect-3-6i2z.onrender.com/api/posts/${postId}/save`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      user: currentUser.name,
+    }),
+  }
+);
 
     const data = await response.json();
 
@@ -227,7 +227,7 @@ useEffect(() => {
   const loadPosts = async () => {
     try {
       const response = await fetch(
-        "http://127.0.0.1:5000/api/posts"
+        "https://campusconnect-3-6i2z.onrender.com/api/posts"
       );
 
       const data = await response.json();
@@ -279,7 +279,7 @@ useEffect(() => {
 
       for (const post of posts) {
         const response = await fetch(
-          `http://127.0.0.1:5000/api/comments/${post._id}`
+          `https://campusconnect-3-6i2z.onrender.com/api/comments/${post._id}`
         );
 
         const data = await response.json();
@@ -369,6 +369,7 @@ useEffect(() => {
   setCurrentUser(null);
 }}
 >
+
   Logout
 </button>
   </>
@@ -556,7 +557,7 @@ onClick={async () => {
 
   try {
     const response = await fetch(
-      "http://127.0.0.1:5000/api/posts",
+      "https://campusconnect-3-6i2z.onrender.com/api/posts",
       {
         method: "POST",
         headers: {
@@ -665,7 +666,7 @@ onClick={async () => {
 
       try {
         const response = await fetch(
-          "http://127.0.0.1:5000/api/comments",
+          "https://campusconnect-3-6i2z.onrender.com/api/comments",
           {
             method: "POST",
             headers: {
@@ -812,7 +813,7 @@ onClick={async () => {
 onClick={async () => {
   try {
     const response = await fetch(
-      `http://127.0.0.1:5000/api/auth/profile/${currentUser.id}`,
+      `https://campusconnect-3-6i2z.onrender.com/api/auth/profile/${currentUser.id}`,
       {
         method: "PUT",
         headers: {
@@ -916,7 +917,7 @@ onClick={async () => {
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:5000/api/auth/login",
+        "https://campusconnect-3-6i2z.onrender.com/api/auth/login",
         {
           method: "POST",
           headers: {
@@ -1023,7 +1024,7 @@ localStorage.setItem("campusBio", data.user.bio || "");
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:5000/api/auth/signup",
+        "https://campusconnect-3-6i2z.onrender.com/api/auth/signup",
         {
           method: "POST",
           headers: {
