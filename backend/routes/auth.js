@@ -3,7 +3,7 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const router = express.Router();
-
+const authMiddleware = require("../middleware/auth");
 router.post("/signup", async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -110,8 +110,14 @@ router.post("/login", async (req, res) => {
     });
   }
 });
-router.put("/profile/:id", async (req, res) => {
+router.put("/profile/:id", authMiddleware, async (req, res) => {
   try {
+    if (req.user.id !== req.params.id) {
+      return res.status(403).json({
+        message: "You can only update your own profile",
+      });
+    }
+
     const { college, course, semester, bio } = req.body;
 
     const user = await User.findByIdAndUpdate(

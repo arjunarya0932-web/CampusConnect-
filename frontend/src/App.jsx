@@ -816,8 +816,9 @@ onClick={async () => {
       `https://campusconnect-3-6i2z.onrender.com/api/auth/profile/${currentUser.id}`,
       {
         method: "PUT",
-        headers: {
+           headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("campusToken")}`,
         },
         body: JSON.stringify({
           college,
