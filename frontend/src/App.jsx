@@ -46,27 +46,40 @@ const [unreadNotifications, setUnreadNotifications] = useState(0);
   const savedUser = localStorage.getItem("campusUser");
   return savedUser ? JSON.parse(savedUser) : null;
 });
+
 useEffect(() => {
-  if (!currentUser) return;
+  if (!currentUser) {
+    setNotifications([]);
+    setUnreadNotifications(0);
+    return;
+  }
 
   const fetchNotifications = async () => {
     try {
+      const token = localStorage.getItem("campusToken");
+
+      if (!token) return;
+
       const response = await fetch(
-        `https://campusconnect-3-6i2z.onrender.com/api/notifications/${encodeURIComponent(
-          currentUser.name
-        )}`
+        "https://campusconnect-3-6i2z.onrender.com/api/notifications",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
       const data = await response.json();
 
       if (response.ok) {
-        setNotifications(data.notifications || []);
+        const notificationList = data.notifications || [];
 
-        const unread = (data.notifications || []).filter(
-          (notification) => !notification.read
-        ).length;
-
-        setUnreadNotifications(unread);
+        setNotifications(notificationList);
+        setUnreadNotifications(
+          notificationList.filter(
+            (notification) => !notification.read
+          ).length
+        );
       }
     } catch (error) {
       console.error("Failed to fetch notifications:", error);
@@ -75,6 +88,7 @@ useEffect(() => {
 
   fetchNotifications();
 }, [currentUser]);
+
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [showSignup, setShowSignup] = useState(false);
@@ -127,10 +141,9 @@ const [bio, setBio] = useState(
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("campusToken")}`,
         },
-        body: JSON.stringify({
-          user: currentUser.name,
-        }),
+        body: JSON.stringify({}),
       }
     );
 
@@ -164,10 +177,8 @@ const deletePost = async (postId) => {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("campusToken")}`,
         },
-        body: JSON.stringify({
-          user: currentUser.name,
-        }),
       }
     );
 
@@ -199,10 +210,9 @@ const toggleSave = async (postId) => {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("campusToken")}`,
     },
-    body: JSON.stringify({
-      user: currentUser.name,
-    }),
+    body: JSON.stringify({}),
   }
 );
 
@@ -339,6 +349,50 @@ useEffect(() => {
     <span className="user-welcome">
       Hi, {currentUser.name}
     </span>
+
+<button
+  className="login-btn notification-btn"
+  onClick={async () => {
+    const willOpen = !showNotifications;
+    setShowNotifications(willOpen);
+
+    if (willOpen && unreadNotifications > 0) {
+      try {
+        const token = localStorage.getItem("campusToken");
+
+        const response = await fetch(
+          "https://campusconnect-3-6i2z.onrender.com/api/notifications/read",
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.ok) {
+          setNotifications((previous) =>
+            previous.map((notification) => ({
+              ...notification,
+              read: true,
+            }))
+          );
+          setUnreadNotifications(0);
+        }
+      } catch (error) {
+        console.error("Failed to mark notifications as read:", error);
+      }
+    }
+  }}
+>
+  🔔
+  {unreadNotifications > 0 && (
+    <span className="notification-badge">
+      {unreadNotifications}
+    </span>
+  )}
+</button>
+
 <button
   className="login-btn"
   onClick={() =>
@@ -380,6 +434,28 @@ useEffect(() => {
 )}
         </nav>
       </header>
+
+{showNotifications && currentUser && (
+  <div className="notifications-panel">
+    <h3>Notifications</h3>
+
+    {notifications.length === 0 ? (
+      <p>No notifications yet.</p>
+    ) : (
+      notifications.map((notification) => (
+        <div
+          className={`notification-item ${
+            notification.read ? "read" : "unread"
+          }`}
+          key={notification._id}
+        >
+          <p>{notification.message}</p>
+          <small>{getTimeAgo(notification.createdAt)}</small>
+        </div>
+      ))
+    )}
+  </div>
+)}
 
       <main>
         <section className="hero" id="home">
@@ -562,9 +638,9 @@ onClick={async () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("campusToken")}`,
         },
         body: JSON.stringify({
-          author: currentUser.name,
           content: newPost,
         }),
       }
@@ -671,10 +747,10 @@ onClick={async () => {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-            },
+          Authorization: `Bearer ${localStorage.getItem("campusToken")}`,
+  },
             body: JSON.stringify({
               postId: post._id,
-              author: currentUser.name,
               content: commentText[post._id],
             }),
           }
@@ -988,7 +1064,7 @@ localStorage.setItem("campusBio", data.user.bio || "");
               <p className="tag">JOIN CAMPUSCONNECT</p>
               <h2>Create your account</h2>
 
-              <p className="login-subtitle">
+              <p>
                 Join your college community and start connecting.
               </p>
 

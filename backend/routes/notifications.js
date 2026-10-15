@@ -1,46 +1,42 @@
+
 const express = require("express");
 const Notification = require("../models/Notification");
+const authMiddleware = require("../middleware/auth");
 
 const router = express.Router();
 
-// Get notifications for a user
-router.get("/:user", async (req, res) => {
+// Get notifications for the logged-in user
+router.get("/", authMiddleware, async (req, res) => {
   try {
+    const username = req.user.name;
+
     const notifications = await Notification.find({
-      user: req.params.user,
+      user: username,
     }).sort({ createdAt: -1 });
 
-    res.json({
-      notifications,
-    });
+    res.json({ notifications });
   } catch (error) {
     console.error(error);
-
     res.status(500).json({
       message: "Failed to fetch notifications",
     });
   }
 });
 
-// Mark all notifications as read
-router.put("/:user/read", async (req, res) => {
+// Mark notifications as read for the logged-in user
+router.put("/read", authMiddleware, async (req, res) => {
   try {
+    const username = req.user.name;
+
     await Notification.updateMany(
-      {
-        user: req.params.user,
-        read: false,
-      },
-      {
-        $set: { read: true },
-      }
+      { user: username, read: false },
+      { $set: { read: true } }
     );
 
     res.json({
-      message: "Notifications marked as read",
-    });
+      message: "Notifications marked as read",    });
   } catch (error) {
     console.error(error);
-
     res.status(500).json({
       message: "Failed to update notifications",
     });

@@ -2,6 +2,7 @@ const express = require("express");
 const Comment = require("../models/Comment");
 const Notification = require("../models/Notification");
 const Post = require("../models/Post");
+const authMiddleware = require("../middleware/auth");
 
 const router = express.Router();
 
@@ -25,14 +26,21 @@ router.get("/:postId", async (req, res) => {
 });
 
 // Create a comment
-router.post("/", async (req, res) => {
+router.post("/", authMiddleware, async (req, res) => {
   try {
-    const { postId, author, content } = req.body;
+    const { postId, content } = req.body;
+    const author = req.user.name;
 
-    if (!postId || !author || !content || !content.trim()) {
+    if (!postId || !content || !content.trim()) {
       return res.status(400).json({
-        message: "Post, author and comment are required",
+        message: "Post and comment are required",
       });
+    }
+
+    const post = await Post.findById(postId);
+
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
     }
 
     const comment = await Comment.create({
@@ -40,8 +48,6 @@ router.post("/", async (req, res) => {
       author,
       content: content.trim(),
     });
-
-    const post = await Post.findById(postId);
 
     if (post && post.author !== author) {
       await Notification.create({

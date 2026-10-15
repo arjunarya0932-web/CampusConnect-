@@ -1,6 +1,7 @@
 const express = require("express");
 const Post = require("../models/Post");
 const Notification = require("../models/Notification");
+const authMiddleware = require("../middleware/auth");
 
 const router = express.Router();
 
@@ -22,13 +23,14 @@ router.get("/", async (req, res) => {
 });
 
 // Create a post
-router.post("/", async (req, res) => {
+router.post("/", authMiddleware, async (req, res) => {
   try {
-    const { author, content } = req.body;
+    const author = req.user.name;
+    const { content } = req.body;
 
-    if (!author || !content || !content.trim()) {
+    if (!content || !content.trim()) {
       return res.status(400).json({
-        message: "Author and post content are required",
+        message: "Post content is required",
       });
     }
 
@@ -51,9 +53,9 @@ router.post("/", async (req, res) => {
 });
 
 // Like / Unlike a post
-router.post("/:postId/like", async (req, res) => {
+router.post("/:postId/like", authMiddleware, async (req, res) => {
   try {
-    const { user } = req.body;
+    const user = req.user.name;
 
     if (!user) {
       return res.status(400).json({
@@ -103,9 +105,9 @@ router.post("/:postId/like", async (req, res) => {
 });
 
 // Save / Unsave a post
-router.post("/:postId/save", async (req, res) => {
+router.post("/:postId/save", authMiddleware, async (req, res) => {
   try {
-    const { user } = req.body;
+    const user = req.user.name;
 
     if (!user) {
       return res.status(400).json({
@@ -146,9 +148,9 @@ router.post("/:postId/save", async (req, res) => {
   }
 });
 // Delete a post (only the author can delete)
-router.delete("/:postId", async (req, res) => {
+router.delete("/:postId", authMiddleware, async (req, res) => {
   try {
-    const { user } = req.body;
+    const user = req.user.name;
 
     if (!user) {
       return res.status(400).json({
