@@ -87,6 +87,9 @@ useEffect(() => {
   };
 
   fetchNotifications();
+  const intervalId = setInterval(fetchNotifications, 30000);
+
+return () => clearInterval(intervalId);
 }, [currentUser]);
 
   const [loginEmail, setLoginEmail] = useState("");
@@ -128,15 +131,24 @@ const [bio, setBio] = useState(
   const [karanComment, setKaranComment] = useState("");
   const [karanComments, setKaranComments] = useState([]);
   const [showTopButton, setShowTopButton] = useState(false);
- const toggleLike = async (postId) => {
+ 
+const toggleLike = async (postId) => {
   if (!currentUser) {
     alert("Please login first.");
     return;
   }
 
+  const wasLiked = !!likedPosts[postId];
+
+  // Update the UI immediately
+  setLikedPosts((prev) => ({
+    ...prev,
+    [postId]: !wasLiked,
+  }));
+
   try {
     const response = await fetch(
-     `https://campusconnect-3-6i2z.onrender.com/api/posts/${postId}/like`,
+      `https://campusconnect-3-6i2z.onrender.com/api/posts/${postId}/like`,
       {
         method: "POST",
         headers: {
@@ -150,6 +162,10 @@ const [bio, setBio] = useState(
     const data = await response.json();
 
     if (!response.ok) {
+      setLikedPosts((prev) => ({
+        ...prev,
+        [postId]: wasLiked,
+      }));
       alert(data.message || "Failed to update like.");
       return;
     }
@@ -160,9 +176,16 @@ const [bio, setBio] = useState(
     }));
   } catch (error) {
     console.error(error);
+
+    setLikedPosts((prev) => ({
+      ...prev,
+      [postId]: wasLiked,
+    }));
+
     alert("Could not connect to server.");
   }
 };
+
 const deletePost = async (postId) => {
   const confirmDelete = window.confirm(
     "Are you sure you want to delete this post?"
@@ -197,28 +220,41 @@ const deletePost = async (postId) => {
     alert("Could not connect to server.");
   }
 };
+
 const toggleSave = async (postId) => {
   if (!currentUser) {
     alert("Please login first.");
     return;
   }
 
+  const wasSaved = !!savedPosts[postId];
+
+  // Update the UI immediately
+  setSavedPosts((prev) => ({
+    ...prev,
+    [postId]: !wasSaved,
+  }));
+
   try {
- const response = await fetch(
-  `https://campusconnect-3-6i2z.onrender.com/api/posts/${postId}/save`,
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("campusToken")}`,
-    },
-    body: JSON.stringify({}),
-  }
-);
+    const response = await fetch(
+      `https://campusconnect-3-6i2z.onrender.com/api/posts/${postId}/save`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("campusToken")}`,
+        },
+        body: JSON.stringify({}),
+      }
+    );
 
     const data = await response.json();
 
     if (!response.ok) {
+      setSavedPosts((prev) => ({
+        ...prev,
+        [postId]: wasSaved,
+      }));
       alert(data.message || "Failed to update save.");
       return;
     }
@@ -229,9 +265,16 @@ const toggleSave = async (postId) => {
     }));
   } catch (error) {
     console.error(error);
+
+    setSavedPosts((prev) => ({
+      ...prev,
+      [postId]: wasSaved,
+    }));
+
     alert("Could not connect to server.");
   }
 };
+
 useEffect(() => {
 
   const loadPosts = async () => {
@@ -283,33 +326,7 @@ useEffect(() => {
   setSavedPosts(nextSavedPosts);
 }, [posts, currentUser]);
 useEffect(() => {
-  const loadComments = async () => {
-    try {
-      const commentsData = {};
-
-      for (const post of posts) {
-        const response = await fetch(
-          `https://campusconnect-3-6i2z.onrender.com/api/comments/${post._id}`
-        );
-
-        const data = await response.json();
-
-        if (response.ok) {
-          commentsData[post._id] = data.comments || [];
-        }
-      }
-
-      setComments(commentsData);
-    } catch (error) {
-      console.error("Failed to load comments:", error);
-    }
-  };
-
-  if (posts.length > 0) {
-    loadComments();
-  }
-}, [posts]);
-useEffect(() => {
+  
   const handleScroll = () => {
     setShowTopButton(window.scrollY > 400);
   };
@@ -344,6 +361,16 @@ useEffect(() => {
 >
   Community
 </a>
+
+{currentUser && (
+  <a
+    href="#community"
+    onClick={() => setActivePage("saved")}
+  >
+    Saved Posts
+  </a>
+)}
+
        {currentUser ? (
   <>
     <span className="user-welcome">
@@ -597,7 +624,11 @@ useEffect(() => {
 <section className="community-feed" id="community">
   <div className="section-heading">
     <p className="tag">CAMPUS COMMUNITY</p>
-    <h2>What’s happening on campus?</h2>
+   <h2>
+  {activePage === "saved"
+    ? "Your Saved Posts"
+    : "What's happening on campus?"}
+</h2>
     <p>Ask questions, share resources and connect with students.</p>
   </div>
   {postSuccess && (
@@ -679,13 +710,18 @@ onClick={async () => {
 </div>
 
 <div className="feed-posts">
-   {posts
+
+{posts
+  .filter((post) =>
+    activePage !== "saved" || savedPosts[post._id]
+  )
   .filter((post) =>
     (post.content + " " + post.author)
       .toLowerCase()
       .includes(searchTerm.toLowerCase())
   )
   .map((post, index) => (
+
  <div className="post-card" key={post._id}>
     <div className="post-header">
      <div className="avatar">
@@ -704,7 +740,7 @@ onClick={async () => {
 
     <div className="post-actions">
 <button onClick={() => toggleLike(post._id)}>
- {likedPosts[post._id] ? "♥ Liked" : "♡ Like"}
+{likedPosts[post._id] ? "♥ Liked" : "♡ Like"}
 </button>
       <button
   onClick={() =>
