@@ -275,8 +275,8 @@ const toggleSave = async (postId) => {
   }
 };
 
-useEffect(() => {
 
+useEffect(() => {
   const loadPosts = async () => {
     try {
       const response = await fetch(
@@ -286,7 +286,36 @@ useEffect(() => {
       const data = await response.json();
 
       if (response.ok) {
-        setPosts(data.posts || data);
+        const loadedPosts = data.posts || data;
+        setPosts(loadedPosts);
+
+        // Load saved comments for every post
+        const commentResults = await Promise.all(
+          loadedPosts.map(async (post) => {
+            try {
+              const commentResponse = await fetch(
+                `https://campusconnect-3-6i2z.onrender.com/api/comments/${post._id}`
+              );
+
+              const commentData = await commentResponse.json();
+
+              return [
+                post._id,
+                commentResponse.ok
+                  ? commentData.comments || []
+                  : [],
+              ];
+            } catch (error) {
+              console.error(
+                `Failed to load comments for post ${post._id}:`,
+                error
+              );
+              return [post._id, []];
+            }
+          })
+        );
+
+        setComments(Object.fromEntries(commentResults));
       }
     } catch (error) {
       console.error("Failed to load posts:", error);
@@ -295,6 +324,7 @@ useEffect(() => {
 
   loadPosts();
 }, []);
+
 useEffect(() => {
   if (!currentUser) {
     setLikedPosts({});
